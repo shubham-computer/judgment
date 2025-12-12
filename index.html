@@ -2,16 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>Dynamic Scoreboard with Total</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
     body {
       background-color: #1b1b2f;
       font-family: 'Arial', sans-serif;
       color: white;
       padding: 10px;
+      margin: 0;
+      overflow-x: hidden;
     }
+
     .scoreboard {
       background-color: #f8f3e7;
       color: black;
@@ -19,39 +23,20 @@
       padding: 20px;
       margin: auto;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: center;
-    }
-    th, td {
-      padding: 8px;
-      border: 1px solid #ccc;
-    }
+
+    table { width: 100%; border-collapse: collapse; text-align: center; }
+    th, td { padding: 8px; border: 1px solid #ccc; }
     th { background-color: #ddd; }
 
     input {
-      width: 60px;
-      text-align: center;
-      border: none;
-      background-color: #f8f3e7;
+      width: 60px; text-align: center;
+      border: none; background-color: #f8f3e7;
       font-weight: bold;
     }
-    input.name-input {
-      width: 100px;
-      text-align: center;
-    }
+    input.name-input { width: 100px; text-align: center; }
 
     .btn-next, .btn-result, .btn-reset {
-      display: block;
-      margin: 20px auto 0;
-      width: 170px;
-    }
-
-    .winner {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 1.2rem;
+      display: block; margin: 20px auto 0; width: 170px;
     }
 
     #fullscreenBtn {
@@ -59,19 +44,19 @@
       right: 20px;
       top: 20px;
       z-index: 9999;
+      padding: 6px 12px;
+      border-radius: 50%;
     }
   </style>
 </head>
 
 <body>
 
-<!-- <button id="fullscreenBtn" class="btn btn-warning">Full Screen</button> -->
- <button id="fullscreenBtn" class="btn btn-warning" style="display:flex;align-items:center;gap:6px;">
+<button id="fullscreenBtn" class="btn btn-warning" style="display:flex;align-items:center;gap:6px;">
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="black" viewBox="0 0 16 16">
     <path d="M1 1h5v2H3v3H1V1zm9 0h5v5h-2V3h-3V1zm5 9v5h-5v-2h3v-3h2zM1 10h2v3h3v2H1v-5z"/>
   </svg>
 </button>
-
 
 <div class="scoreboard">
   <div class="table-responsive">
@@ -85,7 +70,6 @@
           <th><input class="name-input" id="n4" value="D" type="text"></th>
         </tr>
       </thead>
-
       <tbody id="scoreBody"></tbody>
     </table>
   </div>
@@ -96,7 +80,6 @@
 
   <div id="winnerDiv" class="winner"></div>
 </div>
-
 
 <script>
   const scoreBody = document.getElementById('scoreBody');
@@ -109,28 +92,43 @@
   let currentRow = 1;
   let currentNumber = 13;
 
-  // FULL SCREEN
+  /*===============================
+      FULL SCREEN (Android + iPhone)
+  ===============================*/
+  function openFullscreen() {
+    const el = document.documentElement;
+
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen(); // iPhone
+    else if (el.msRequestFullscreen) el.msRequestFullscreen();
+
+    // iPhone fallback – hide top bar
+    setTimeout(() => window.scrollTo(0, 1), 100);
+  }
+
+  function closeFullscreen() {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  }
+
   document.getElementById("fullscreenBtn").onclick = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      openFullscreen();
     } else {
-      document.exitFullscreen();
+      closeFullscreen();
     }
   };
 
-  // ---------- SAVE DATA ----------
+  /*========== SAVE DATA ==========*/
   function saveData() {
     const data = {
       names: [
-        document.getElementById("n1").value,
-        document.getElementById("n2").value,
-        document.getElementById("n3").value,
-        document.getElementById("n4").value,
+        n1.value, n2.value, n3.value, n4.value
       ],
       rows: [],
       currentRow,
       currentNumber,
-      winnerHTML: winnerDiv.innerHTML    // ⭐ WINNER SAVE
+      winnerHTML: winnerDiv.innerHTML
     };
 
     document.querySelectorAll("#scoreBody tr").forEach(row => {
@@ -143,8 +141,7 @@
     localStorage.setItem("LICK_SCORE", JSON.stringify(data));
   }
 
-
-  // ---------- LOAD DATA ----------
+  /*========== LOAD DATA ==========*/
   function loadData() {
     const saved = JSON.parse(localStorage.getItem("LICK_SCORE"));
     if (!saved) {
@@ -152,10 +149,7 @@
       return;
     }
 
-    document.getElementById("n1").value = saved.names[0];
-    document.getElementById("n2").value = saved.names[1];
-    document.getElementById("n3").value = saved.names[2];
-    document.getElementById("n4").value = saved.names[3];
+    [n1.value, n2.value, n3.value, n4.value] = saved.names;
 
     currentRow = saved.currentRow;
     currentNumber = saved.currentNumber;
@@ -173,8 +167,7 @@
       });
     });
 
-    // ⭐ Winner Restore
-    if (saved.winnerHTML && saved.winnerHTML !== "") {
+    if (saved.winnerHTML) {
       winnerDiv.innerHTML = saved.winnerHTML;
       nextBtn.classList.add("d-none");
       resultBtn.classList.add("d-none");
@@ -182,8 +175,7 @@
     }
   }
 
-
-  // ---------- ADD NEW ROW ----------
+  /*========== ADD ROW ==========*/
   function addRow(card, number, autoSave = true) {
     const row = document.createElement("tr");
     row.innerHTML = `
@@ -193,7 +185,6 @@
       <td><input type="number"></td>
       <td><input type="number"></td>
     `;
-
     scoreBody.appendChild(row);
 
     row.querySelectorAll("input").forEach(inp => {
@@ -207,27 +198,18 @@
     if (autoSave) saveData();
   }
 
-
-  // ---------- SHOW RESULT ----------
+  /*========== SHOW RESULT ==========*/
   function showResult() {
     let totals = [0, 0, 0, 0];
 
     document.querySelectorAll("#scoreBody tr").forEach(row => {
-      const inputs = row.querySelectorAll("input");
-      inputs.forEach((inp, i) => {
+      row.querySelectorAll("input").forEach((inp, i) => {
         totals[i] += Number(inp.value || 0);
       });
     });
 
-    let minScore = Math.min(...totals);
-    let winnerIndex = totals.indexOf(minScore);
-
-    let names = [
-      document.getElementById("n1").value,
-      document.getElementById("n2").value,
-      document.getElementById("n3").value,
-      document.getElementById("n4").value
-    ];
+    let names = [n1.value, n2.value, n3.value, n4.value];
+    let winnerIndex = totals.indexOf(Math.min(...totals));
 
     winnerDiv.innerHTML = `
         <h3>🏆 Winner: ${names[winnerIndex]}</h3>
@@ -238,18 +220,15 @@
     `;
   }
 
-
-  // ---------- NEXT BUTTON ----------
+  /*========== NEXT BUTTON ==========*/
   nextBtn.addEventListener("click", () => {
-
     const rows = scoreBody.querySelectorAll("tr");
     if (rows.length > 0) {
-      rows[rows.length - 1].querySelectorAll("input").forEach(inp => inp.disabled = true);
+      rows[rows.length - 1].querySelectorAll("input").forEach(i => i.disabled = true);
     }
 
     currentNumber--;
     addRow(cardSequence[currentRow % 4], currentNumber);
-
     currentRow++;
 
     if (currentNumber === 0) {
@@ -260,23 +239,21 @@
     saveData();
   });
 
-
-  // ---------- RESULT BUTTON ----------
+  /*========== RESULT BUTTON ==========*/
   resultBtn.addEventListener("click", () => {
     showResult();
     resetBtn.classList.remove("d-none");
     resultBtn.classList.add("d-none");
     nextBtn.classList.add("d-none");
-    saveData();   // ⭐ Winner Now Saved
+    saveData();
   });
 
-  // ---------- RESET BUTTON ----------
+  /*========== RESET ==========*/
   resetBtn.addEventListener("click", () => {
     localStorage.removeItem("LICK_SCORE");
-    location.reload();  
+    location.reload();
   });
 
-  // LOAD ON PAGE OPEN
   loadData();
 </script>
 
