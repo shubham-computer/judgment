@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,11 +48,18 @@
       padding: 6px 12px;
       border-radius: 50%;
     }
+
+    #previewBtn {
+      width: 170px;
+      margin: 10px auto 0;
+      display: none;
+    }
   </style>
 </head>
 
 <body>
 
+<!-- FULLSCREEN BUTTON -->
 <button id="fullscreenBtn" class="btn btn-warning" style="display:flex;align-items:center;gap:6px;">
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="black" viewBox="0 0 16 16">
     <path d="M1 1h5v2H3v3H1V1zm9 0h5v5h-2V3h-3V1zm5 9v5h-5v-2h3v-3h2zM1 10h2v3h3v2H1v-5z"/>
@@ -74,18 +82,27 @@
     </table>
   </div>
 
+
   <button class="btn btn-success btn-next" id="nextBtn">Next</button>
   <button class="btn btn-primary btn-result d-none" id="resultBtn">Show Result</button>
+  <button id="previewBtn" class="btn btn-info" style="display:flex;align-items:center;gap:1px;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="black" viewBox="0 0 16 16">
+      <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8z"/>
+      <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+    </svg>
+    Preview
+  </button>
   <button class="btn btn-danger btn-reset d-none" id="resetBtn">Reset Game</button>
+  </div>
 
   <div id="winnerDiv" class="winner"></div>
-</div>
 
 <script>
   const scoreBody = document.getElementById('scoreBody');
   const nextBtn = document.getElementById('nextBtn');
   const resultBtn = document.getElementById('resultBtn');
   const resetBtn = document.getElementById('resetBtn');
+  const previewBtn = document.getElementById('previewBtn');
   const winnerDiv = document.getElementById('winnerDiv');
 
   const cardSequence = ['L', 'I', 'C', 'K'];
@@ -93,17 +110,13 @@
   let currentNumber = 13;
 
   /*===============================
-      FULL SCREEN (Android + iPhone)
+        FULL SCREEN BUTTON
   ===============================*/
   function openFullscreen() {
     const el = document.documentElement;
-
     if (el.requestFullscreen) el.requestFullscreen();
-    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen(); // iPhone
-    else if (el.msRequestFullscreen) el.msRequestFullscreen();
-
-    // iPhone fallback – hide top bar
-    setTimeout(() => window.scrollTo(0, 1), 100);
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    setTimeout(() => window.scrollTo(0, 1), 150);
   }
 
   function closeFullscreen() {
@@ -112,19 +125,14 @@
   }
 
   document.getElementById("fullscreenBtn").onclick = () => {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      openFullscreen();
-    } else {
-      closeFullscreen();
-    }
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) openFullscreen();
+    else closeFullscreen();
   };
 
   /*========== SAVE DATA ==========*/
   function saveData() {
     const data = {
-      names: [
-        n1.value, n2.value, n3.value, n4.value
-      ],
+      names: [n1.value, n2.value, n3.value, n4.value],
       rows: [],
       currentRow,
       currentNumber,
@@ -171,6 +179,7 @@
       winnerDiv.innerHTML = saved.winnerHTML;
       nextBtn.classList.add("d-none");
       resultBtn.classList.add("d-none");
+      previewBtn.style.display = "flex";
       resetBtn.classList.remove("d-none");
     }
   }
@@ -209,29 +218,34 @@
     });
 
     let names = [n1.value, n2.value, n3.value, n4.value];
-    let winnerIndex = totals.indexOf(Math.min(...totals));
+
+    let winnerIndex = totals.indexOf(Math.max(...totals));
 
     winnerDiv.innerHTML = `
-        <h3>🏆 Winner: ${names[winnerIndex]}</h3>
-        <p><b>${names[0]}:</b> ${totals[0]} | 
-        <b>${names[1]}:</b> ${totals[1]} | 
-        <b>${names[2]}:</b> ${totals[2]} | 
-        <b>${names[3]}:</b> ${totals[3]}</p>
+      <h3>🏆 Winner : ${names[winnerIndex]}</h3>
+      <p><b>Highest Score:</b> ${totals[winnerIndex]}</p>
+      <hr>
+      <p>
+      <b>${names[0]}:</b> ${totals[0]} |
+      <b>${names[1]}:</b> ${totals[1]} |
+      <b>${names[2]}:</b> ${totals[2]} |
+      <b>${names[3]}:</b> ${totals[3]}
+      </p>
     `;
   }
 
   /*========== NEXT BUTTON ==========*/
   nextBtn.addEventListener("click", () => {
     const rows = scoreBody.querySelectorAll("tr");
-    if (rows.length > 0) {
-      rows[rows.length - 1].querySelectorAll("input").forEach(i => i.disabled = true);
-    }
+    if (rows.length > 0) rows[rows.length - 1].querySelectorAll("input").forEach(i => i.disabled = true);
 
     currentNumber--;
-    addRow(cardSequence[currentRow % 4], currentNumber);
-    currentRow++;
+    if (currentNumber >= 1) {
+      addRow(cardSequence[currentRow % 4], currentNumber);
+      currentRow++;
+    }
 
-    if (currentNumber === 0) {
+    if (currentNumber === 1) {
       nextBtn.classList.add("d-none");
       resultBtn.classList.remove("d-none");
     }
@@ -242,13 +256,51 @@
   /*========== RESULT BUTTON ==========*/
   resultBtn.addEventListener("click", () => {
     showResult();
+    previewBtn.style.display = "flex";
     resetBtn.classList.remove("d-none");
     resultBtn.classList.add("d-none");
     nextBtn.classList.add("d-none");
     saveData();
   });
 
-  /*========== RESET ==========*/
+  /*========== PREVIEW MODE ==========*/
+  let previewMode = false;
+
+  function togglePreview() {
+    previewMode = !previewMode;
+    const allInputs = document.querySelectorAll("#scoreBody tr input");
+
+    if (previewMode) {
+      allInputs.forEach(i => i.disabled = false);
+
+      previewBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="black" viewBox="0 0 16 16">
+          <path d="M13.359 11.238l2.122 2.122-1.414 1.414-2.122-2.122a8 8 0 0 1-4.945 1.681C3 14.333 0 8.333 0 8.333S3 2.333 8 2.333c1.25 0 2.447.351 3.5.962l-1.384 1.384A6 6 0 0 0 8 4.333c-3.333 0-5.667 4-5.667 4s2.334 4 5.667 4a5.98 5.98 0 0 0 3.359-1.098z"/>
+        </svg>
+        Exit Preview
+      `;
+    } 
+    else {
+      const rows = scoreBody.querySelectorAll("tr");
+      rows.forEach((row, index) => {
+        const inputs = row.querySelectorAll("input");
+        if (index < rows.length - 1) inputs.forEach(i => i.disabled = true);
+        else inputs.forEach(i => i.disabled = false);
+      });
+
+      previewBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="black" viewBox="0 0 16 16">
+          <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8z"/>
+          <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+        </svg>
+        Preview
+      `;
+    }
+  }
+
+  previewBtn.addEventListener("click", togglePreview);
+
+  /*========== RESET BUTTON ==========*/
   resetBtn.addEventListener("click", () => {
     localStorage.removeItem("LICK_SCORE");
     location.reload();
