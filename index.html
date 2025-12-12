@@ -83,9 +83,10 @@
   </div>
 
 
+  
   <button class="btn btn-success btn-next" id="nextBtn">Next</button>
   <button class="btn btn-primary btn-result d-none" id="resultBtn">Show Result</button>
-  <button id="previewBtn" class="btn btn-info" style="display:flex;align-items:center;gap:1px;">
+  <button id="previewBtn" class="btn btn-info" style="display:flex;align-items:center;gap:6px;">
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="black" viewBox="0 0 16 16">
       <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8z"/>
       <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
@@ -93,9 +94,9 @@
     Preview
   </button>
   <button class="btn btn-danger btn-reset d-none" id="resetBtn">Reset Game</button>
-  </div>
 
   <div id="winnerDiv" class="winner"></div>
+</div>
 
 <script>
   const scoreBody = document.getElementById('scoreBody');
@@ -104,6 +105,13 @@
   const resetBtn = document.getElementById('resetBtn');
   const previewBtn = document.getElementById('previewBtn');
   const winnerDiv = document.getElementById('winnerDiv');
+
+  const cardIcons = {
+    L: "♥️",
+    I: "♦️",
+    C: "♣️",
+    K: "♠️"
+};
 
   const cardSequence = ['L', 'I', 'C', 'K'];
   let currentRow = 1;
@@ -188,7 +196,7 @@
   function addRow(card, number, autoSave = true) {
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td>${card} - ( ${number} )</td>
+      <td>${cardIcons[card]} ${card} - ( ${number} )</td>
       <td><input type="number"></td>
       <td><input type="number"></td>
       <td><input type="number"></td>
